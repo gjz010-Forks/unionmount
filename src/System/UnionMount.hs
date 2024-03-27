@@ -183,7 +183,7 @@ unionMount' sources pats ignore = do
           -- Run fsnotify on sources
           q :: TMVar (x, Maybe FilePath, FilePath, Either (FolderAction ()) (FileAction ())) <- liftIO newEmptyTMVarIO
           fmap (either id id) $
-            race (onChange q (toList sources)) $
+            race (onChange q (toList sources) ignore) $
               let readDebounced = do
                     -- Wait for some initial action in the queue.
                     _ <- atomically $ readTMVar q
@@ -282,10 +282,11 @@ onChange ::
   (Eq x, MonadIO m, MonadLogger m, MonadUnliftIO m) =>
   TMVar (x, Maybe FilePath, FilePath, Either (FolderAction ()) (FileAction ())) ->
   [(x, (FilePath, Maybe FilePath))] ->
+  [FilePattern] ->
   -- | The filepath is relative to the folder being monitored, unless if its
   -- ancestor is a symlink.
   m Cmd
-onChange q roots = do
+onChange q roots ignore = do
   withManagerM $ \mgr -> do
     stops <- forM roots $ \(x, (rootRel, mountPoint)) -> do
       -- NOTE: It is important to use canonical path, because this will allow us to
@@ -293,7 +294,8 @@ onChange q roots = do
       -- @parent'@ (as passed by user), which is what @f@ will expect.
       root <- liftIO $ canonicalizePath rootRel
       log LevelInfo $ toText $ "Monitoring " <> root <> " for changes"
-      watchTreeM mgr root (const True) $ \event -> do
+      let shouldIgnore fp = any (?== fp) ignore
+      watchTreeM mgr root (not . shouldIgnore . eventPath) $ \event -> do
         log LevelDebug $ show event
         atomically $ do
           lastQ <- tryTakeTMVar q
