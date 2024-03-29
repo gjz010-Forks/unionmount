@@ -33,6 +33,22 @@
         "type": "github"
       }
     },
+    "hfsnotify": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1711728077,
+        "narHash": "sha256-Cu68q7n2vP8RIat1sIOL3q8MP5uXbFe4IHHTchmR2kc=",
+        "owner": "gjz010-Forks",
+        "repo": "hfsnotify",
+        "rev": "c1d2817614eaba6f03b1022635b2cdc1474d28e8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gjz010-Forks",
+        "repo": "hfsnotify",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1709356872,
@@ -71,6 +87,7 @@
       "inputs": {
         "flake-parts": "flake-parts",
         "haskell-flake": "haskell-flake",
+        "hfsnotify": "hfsnotify",
         "nixpkgs": "nixpkgs",
         "treefmt-nix": "treefmt-nix"
       }

@@ -26,12 +26,14 @@ import Control.Monad.Logger
 import Data.LVar qualified as LVar
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
+import Debug.Trace qualified
 import System.Directory (canonicalizePath)
 import System.FSNotify
   ( ActionPredicate,
     Event (..),
     EventIsDirectory (IsDirectory),
     StopListening,
+    WatchConfig (confPathFilter),
     WatchManager,
     defaultConfig,
     eventIsDirectory,
@@ -287,7 +289,7 @@ onChange ::
   -- ancestor is a symlink.
   m Cmd
 onChange q roots ignore = do
-  withManagerM $ \mgr -> do
+  withManagerM (\x -> Debug.Trace.trace x False) $ \mgr -> do
     stops <- forM roots $ \(x, (rootRel, mountPoint)) -> do
       -- NOTE: It is important to use canonical path, because this will allow us to
       -- transform fsnotify event's (absolute) path into one that is relative to
@@ -332,11 +334,12 @@ onChange q roots ignore = do
 
 withManagerM ::
   (MonadIO m, MonadUnliftIO m) =>
+  (String -> Bool) ->
   (WatchManager -> m a) ->
   m a
-withManagerM f = do
+withManagerM predicate f = do
   withRunInIO $ \run ->
-    withManagerConf defaultConfig $ \mgr -> run (f mgr)
+    withManagerConf (defaultConfig {confPathFilter = predicate}) $ \mgr -> run (f mgr)
 
 watchTreeM ::
   forall m.

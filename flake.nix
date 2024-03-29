@@ -5,8 +5,10 @@
     haskell-flake.url = "github:srid/haskell-flake";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    hfsnotify.url = "github:gjz010-Forks/hfsnotify";
+    hfsnotify.flake = false;
   };
-  outputs = inputs@{ nixpkgs, flake-parts, ... }:
+  outputs = inputs@{ nixpkgs, flake-parts, hfsnotify, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = nixpkgs.lib.systems.flakeExposed;
       imports = [
@@ -17,6 +19,9 @@
       perSystem = { config, self', pkgs, ... }: {
         haskellProjects.default = {
           autoWire = [ "packages" "apps" "checks" ]; # Wire all but the devShell
+          packages = {
+            fsnotify.source = inputs.hfsnotify;
+          };
         };
 
         treefmt.config = {
